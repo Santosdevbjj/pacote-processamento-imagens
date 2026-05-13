@@ -1,379 +1,266 @@
-# Criando um Pacote de Processamento de Imagens com Python.
+# Pacote de processamento de imagena: Biblioteca Python para Processamento de Imagens Publicada no PyPI
 
+![Python](https://img.shields.io/badge/Python-3.8+-3776AB?style=flat&logo=python&logoColor=white)
+![Pillow](https://img.shields.io/badge/Pillow-10.0+-3776AB?style=flat&logo=python&logoColor=white)
+![Pytest](https://img.shields.io/badge/Pytest-7.0+-0A9EDC?style=flat&logo=pytest&logoColor=white)
+![PyPI](https://img.shields.io/badge/PyPI-Publicável-006DAD?style=flat&logo=pypi&logoColor=white)
+![MIT License](https://img.shields.io/badge/Licença-MIT-22C55E?style=flat)
 
-![SuzanoPython003](https://github.com/user-attachments/assets/171946bf-d9f2-4ade-8213-b16500fec681)
-
-
-**Bootcamp Suzano - Python Developer #2**
-
-
-
----
-
-**DESCRIÇÃO:** 
-
-Neste projeto você aprenderá a criar o seu primeiro pacote de processamento de imagens em Python e disponibilizá-lo no repositório Pypi. 
-
-Assim você poderá reutilizá-lo facilmente e compartilhá-lo com outras pessoas. 
-
+> Pacote Python modular para processamento de imagens — redimensionamento, conversão para escala de cinza, aplicação de filtros visuais e listagem em lote — estruturado com separação de responsabilidades, suíte de testes automatizados e pipeline completo de empacotamento e publicação no PyPI.
 
 ---
 
+## 1. Problema de Negócio
 
+Pipelines de visão computacional, automação de mídias e sistemas de pré-processamento de imagens repetem as mesmas operações fundamentais em projetos diferentes: redimensionar, converter para escala de cinza, aplicar filtros de detecção de borda ou suavização, listar arquivos em lote.
 
-🖼️ **pacoteProcessImagem**
+O problema não é a complexidade dessas operações — o Pillow resolve cada uma delas em poucas linhas. O problema é **reuso e distribuição**: sem empacotamento adequado, o mesmo código é copiado de projeto em projeto, gerando inconsistências de versão, ausência de testes e dependência implícita de configurações locais.
 
-Pacote Python desenvolvido por **Sérgio Santos** para **processamento básico de imagens**, com funções para redimensionamento, conversão em tons de cinza e aplicação de filtros simples.
-
----
-
-
-## 🚀 **Tecnologias Utilizadas**
-- **Python 3.8+**
-- **Pillow (PIL Fork)**
-- **Pytest**
-- **Setuptools e Twine (para empacotamento e publicação)**
+O desafio central deste projeto é demonstrar o ciclo completo de **desenvolvimento → teste → empacotamento → publicação** de uma biblioteca Python reutilizável: do código funcional ao pacote instalável via `pip install`, disponível publicamente no PyPI.
 
 ---
 
-## ⚙️ Requisitos de Hardware e Software
-| Requisito | Especificação mínima |
-|------------|----------------------|
-| Sistema Operacional | Windows, Linux ou macOS |
-| Python | 3.8 ou superior |
-| Memória RAM | 4 GB |
-| Disco | 200 MB livres |
-| Dependências | Pillow, Pytest |
+## 2. Contexto
+
+O projeto foi desenvolvido no **Bootcamp Suzano — Python Developer #2**, com objetivo de ir além da implementação das funções e construir o artefato completo que qualquer desenvolvedor Python precisa dominar: um pacote distribuível.
+
+A escolha de processamento de imagens como domínio não é arbitrária — é uma área com demanda crescente em pipelines de Machine Learning (pré-processamento de datasets), sistemas de automação de conteúdo visual e aplicações de visão computacional. As operações implementadas — redimensionamento, conversão para cinza, aplicação de filtros, listagem em lote — são exatamente as etapas de normalização que precedem modelos de classificação e detecção de objetos.
+
+A arquitetura do pacote segue separação de responsabilidades em quatro módulos (`core`, `filters`, `utils`, `demo`), convenções de empacotamento Python (`setup.py`, `MANIFEST.in`, `find_packages`) e suíte de testes com `pytest` usando fixtures de arquivos temporários — estrutura diretamente replicável em qualquer biblioteca Python de produção.
 
 ---
 
-## 📦 Estrutura do Projeto
+## 3. Premissas
 
-<img width="947" height="1107" alt="Screenshot_20251107-143559" src="https://github.com/user-attachments/assets/6a08ff86-9949-4dc1-9b4a-b4a4c5ed0458" />
-
----
-
-
-## 🧰 Instalação
-```bash
-git clone https://github.com/Santosdevbjj/pacoteProcessImagem.git
-cd pacoteProcessImagem
-pip install -r requirements.txt
-
+- As operações de processamento retornam o objeto `Image` do Pillow além de salvar o arquivo — permitindo encadeamento de transformações sem I/O intermediário desnecessário.
+- Filtros inválidos passados a `aplicar_filtro()` fazem fallback automático para `BLUR` ao invés de lançar exceção — decisão de robustez para pipelines automatizados onde o filtro pode ser configurado externamente.
+- Os testes usam `tmp_path` (fixture nativa do pytest) para criar e destruir arquivos temporários — garantindo isolamento total entre casos de teste sem poluir o repositório.
+- O parâmetro `salvar_como` é opcional em todas as funções de processamento: sem ele, a função opera em memória e retorna o objeto `Image` sem I/O — padrão adequado para pipelines onde o resultado é consumido diretamente por outro passo.
+- A versão `0.1.0` segue versionamento semântico; qualquer quebra de interface pública incrementa o major.
 
 ---
+
+## 4. Estratégia da Solução
+
+### 4.1 Arquitetura Modular em Quatro Responsabilidades
+
+```
+src/pacote_process_imagem/
+├── __init__.py     → Exposição pública da API e metadados do pacote
+├── core.py         → Operações fundamentais: redimensionamento e conversão
+├── filters.py      → Aplicação de filtros visuais via ImageFilter
+├── utils.py        → Funções auxiliares: listagem de imagens em lote
+└── demo.py         → Script de demonstração executável
+tests/
+├── test_core.py    → Testes de redimensionamento e conversão para cinza
+├── test_filters.py → Testes de filtros válidos, inválidos e dimensões preservadas
+└── test_utils.py   → Testes de listagem e filtragem por extensão
+docs/
+├── tutorial_instalacao.md    → Guia de instalação local
+└── guia_publicacao_pypi.md   → Ciclo completo de publicação no PyPI
 ```
 
-🧪 **Testes**
+### 4.2 API Pública do Pacote
 
-pytest tests/
+Três funções expostas diretamente via `__init__.py`:
 
-
----
-
-🖥️ **Uso Básico**
-
+```python
 from pacote_process_imagem import redimensionar_imagem, converter_para_cinza, aplicar_filtro
 
+# Redimensiona para 200x200 e salva
 redimensionar_imagem("foto.jpg", 200, 200, "foto_menor.jpg")
+
+# Converte para escala de cinza
 converter_para_cinza("foto.jpg", "foto_pb.jpg")
+
+# Aplica filtro: BLUR | CONTOUR | DETAIL | EDGE_ENHANCE
 aplicar_filtro("foto.jpg", "CONTOUR", "foto_filtro.jpg")
 
-
----
-
-📘 **Publicação no PyPI**
-
-Consulte o guia completo em docs/guia_publicacao_pypi.md
-
-
-
-
-
-
----
-
-# 🧱 Estrutura Detalhada do Projeto
-
-A seguir está a explicação de cada arquivo e pasta do repositório **`pacoteProcessImagem`**, descrevendo sua função e importância dentro do pacote Python.
-
----
-
-## ⚙️ Arquivos de Configuração e Empacotamento
-
-### 🧩 `.gitignore`
-Define quais arquivos e pastas o **Git deve ignorar** durante o versionamento.  
-Isso mantém o repositório limpo, sem arquivos temporários, caches, logs, ambientes virtuais ou configurações locais de IDEs.  
-Principais exemplos:
-- `__pycache__/`, `.pytest_cache/`, `.venv/`
-- `dist/`, `build/`, `*.egg-info/`
-- `.vscode/`, `.idea/`, `.DS_Store`
-
----
-
-### ⚙️ `setup.py`
-É o **núcleo do empacotamento Python**.  
-Define as informações do projeto, dependências, autor, versão e parâmetros necessários para gerar e instalar o pacote.  
-Usado para criar distribuições e publicar no PyPI com `setuptools` e `twine`.
-
-**Principais campos:**
-- `name` — nome oficial do pacote (ex.: `pacote-process-imagem`)
-- `version` — controle de versão semântico
-- `install_requires` — dependências (ex.: Pillow)
-- `packages` — localização do código-fonte
-
----
-
-### 📦 `requirements.txt`
-Lista todas as **bibliotecas externas** necessárias para rodar o projeto.  
-Facilita a instalação com um único comando:
-
-```bash
-pip install -r requirements.txt
-
-
----
-
+# Lista imagens em um diretório (.jpg, .png, .jpeg)
+from pacote_process_imagem.utils import listar_imagens
+imagens = listar_imagens("./dataset/")
 ```
 
+### 4.3 Suíte de Testes com Isolamento por Fixtures
 
-**Inclui:**
+| Arquivo de Teste | Casos Cobertos |
+|---|---|
+| `test_core.py` | Conversão para cinza com verificação de arquivo gerado |
+| `test_filters.py` | BLUR, CONTOUR, filtro inválido (fallback), dimensões preservadas |
+| `test_utils.py` | Listagem filtrando por extensão, retorno vazio em diretório sem imagens |
 
-Pillow → manipulação de imagens
+Todos os testes usam `tmp_path` — nenhum arquivo persiste após a execução da suíte.
 
-pytest → testes automatizados
+### 4.4 Pipeline de Empacotamento e Publicação
 
+```bash
+# 1. Limpar builds anteriores
+rm -rf build dist *.egg-info
 
+# 2. Gerar distribuições (sdist + wheel)
+python setup.py sdist bdist_wheel
 
----
+# 3. Validar no TestPyPI
+python -m twine upload --repository testpypi dist/*
 
-📜 **MANIFEST.in**
+# 4. Instalar do TestPyPI para validar
+pip install --index-url https://test.pypi.org/simple/ pacote-process-imagem
 
-Garante que arquivos não-Python também sejam incluídos nas distribuições, como:
+# 5. Publicar oficialmente
+python -m twine upload dist/*
 
-README.md
+# 6. Instalar a versão pública
+pip install pacote-process-imagem
+```
 
-LICENSE
-
-Pastas src/ e tests/
-
-
-Sem esse arquivo, apenas o código-fonte puro seria empacotado, omitindo a documentação e os testes.
-
-
----
-
-• **Código-Fonte do Pacote**
-
-📁 **src/pacote_process_imagem/__init__.py**
-
-Identifica o diretório como um pacote Python e torna públicas as funções principais.
-Permite importar diretamente de forma simplificada:
-
-from pacote_process_imagem import redimensionar_imagem
-
-Também define metadados como __version__ e __author__.
-
+O `setup.py` configura `find_packages(where='src')` com `package_dir={'': 'src'}` — padrão correto para pacotes com código-fonte em subdiretório, que o `pip` e o `setuptools` resolvem automaticamente ao instalar.
 
 ---
 
-🧮 **src/pacote_process_imagem/core.py**
+## 5. Decisões Técnicas
 
-Contém as funções centrais de processamento de imagens:
+### Por que Pillow ao invés de OpenCV para este pacote?
 
-redimensionar_imagem() → altera as dimensões da imagem
+OpenCV oferece mais recursos para visão computacional avançada, mas carrega dependências pesadas (binários C++) que complicam distribuição via PyPI. Para um pacote de operações fundamentais de pré-processamento, Pillow é a escolha correta: instalação pura via `pip`, sem dependências de sistema, compatível com qualquer ambiente — incluindo containers mínimos e serverless. A migração para OpenCV faz sentido quando o pacote evoluir para detecção de objetos ou processamento de vídeo.
 
-converter_para_cinza() → transforma a imagem para escala de cinza
+### Por que `setup.py` ao invés de `pyproject.toml`?
 
+`pyproject.toml` com `build-backend = "setuptools.build_meta"` é o padrão moderno recomendado pela PEP 517/518. A escolha por `setup.py` foi pragmática para o contexto do bootcamp — mais documentado em tutoriais e com comportamento mais explícito para quem está aprendendo o ciclo de empacotamento pela primeira vez. Em produção, a migração para `pyproject.toml` é o próximo passo natural e está documentada nos próximos passos.
 
-Usa a biblioteca Pillow e manipula objetos Image para abrir, processar e salvar arquivos.
+### Por que fallback silencioso para `BLUR` em filtros inválidos ao invés de exceção?
 
+Em pipelines automatizados onde o nome do filtro vem de configuração externa (arquivo YAML, variável de ambiente, parâmetro de API), uma exceção por filtro inválido interrompe o processamento inteiro do lote. O fallback para `BLUR` garante que o pipeline continue e o resultado seja sempre um arquivo válido — o comportamento inesperado é logável, não fatal. Para casos onde a falha explícita é necessária, a assinatura pode receber `strict=True` como parâmetro opcional na próxima versão.
 
----
+### Por que `MANIFEST.in` explícito?
 
-🎨 **src/pacote_process_imagem/filters.py**
-
-Responsável por aplicar filtros visuais nas imagens com o módulo ImageFilter do Pillow.
-
-Função principal:
-
-aplicar_filtro(caminho, filtro="BLUR", salvar_como=None)
-
-Filtros disponíveis: BLUR, CONTOUR, DETAIL, EDGE_ENHANCE.
-Filtros inválidos são tratados automaticamente como BLUR.
-
+Sem `MANIFEST.in`, o `setuptools` inclui apenas arquivos `.py` na distribuição `sdist`. Isso significa que `README.md`, `LICENSE`, testes e documentação seriam omitidos do tarball — quebrando a expectativa de quem baixa o pacote-fonte para inspecionar ou contribuir. O `MANIFEST.in` garante que a distribuição seja completa e auditável.
 
 ---
 
-🧰 **src/pacote_process_imagem/utils.py**
+## 6. Insights
 
-Contém funções auxiliares de apoio ao pacote.
+A implementação do ciclo completo de empacotamento revelou comportamentos não óbvios com impacto real:
 
-Função implementada:
+**`find_packages(where='src')` requer `package_dir={'': 'src'}` simultâneo:** sem o segundo parâmetro, o setuptools encontra os pacotes mas não sabe onde buscá-los durante a instalação. O erro se manifesta apenas ao instalar o pacote gerado — não durante o desenvolvimento local — tornando-o difícil de diagnosticar sem executar o ciclo completo de publicação e instalação.
 
-listar_imagens(pasta) → retorna uma lista de imagens (.jpg, .png, .jpeg) dentro de um diretório.
+**`tmp_path` do pytest é mais robusto que `tempfile.mkdtemp()` manual:** a fixture gerencia criação e destruição automaticamente, inclusive em caso de falha no teste. Testes que criam arquivos com `tempfile` manual frequentemente deixam resíduos quando a asserção falha antes do cleanup — problema que `tmp_path` elimina por design.
 
+**Retornar o objeto `Image` além de salvar o arquivo dobra a utilidade das funções:** uma função que só salva e retorna `None` força o chamador a reabrir o arquivo para continuar o processamento. O padrão `salvar_se_caminho_fornecido + retornar_objeto` permite tanto uso em pipeline em memória quanto persistência em disco com a mesma chamada — sem I/O desnecessário.
 
-Essencial para automações e execução em lote.
-
+**O `MANIFEST.in` com `recursive-include src *` inclui `__pycache__/`:** em distribuições limpas, o correto é adicionar `global-exclude *.py[cod]` e `prune */\__pycache__` para evitar bytecode compilado na distribuição-fonte.
 
 ---
 
-🧪 **src/pacote_process_imagem/demo.py**
+## 7. Resultados
 
-Demonstra o uso prático do pacote.
-Quando executado, processa uma imagem de exemplo com todas as funções principais:
+- **Pacote Python instalável via `pip`** com API pública de três funções, metadados de versão e autor declarados em `__init__.py`, e ciclo completo de publicação documentado.
 
+- **Quatro módulos com separação explícita de responsabilidades:** operações fundamentais (`core`), filtros visuais (`filters`), utilitários de I/O (`utils`) e demonstração executável (`demo`) — cada módulo testável e substituível independentemente.
+
+- **Suíte de testes com 7 casos** cobrindo comportamento nominal, filtros inválidos com fallback, preservação de dimensões e listagem com filtragem de extensão — todos isolados por `tmp_path`, sem dependência de arquivos externos.
+
+- **Pipeline de publicação documentado em dois ambientes:** TestPyPI para validação e PyPI oficial para distribuição — incluindo o ciclo completo de limpeza, geração de distribuições `sdist` e `wheel`, upload e verificação de instalação.
+
+- **Estrutura diretamente replicável** para qualquer biblioteca Python: a separação `src/pacote/`, `tests/`, `docs/` com `setup.py`, `MANIFEST.in` e `requirements.txt` serve de template para novos pacotes sem retrabalho de configuração.
+
+---
+
+## 8. Tecnologias Utilizadas
+
+| Tecnologia | Versão | Papel no Projeto |
+|---|---|---|
+| Python | 3.8+ | Linguagem principal |
+| Pillow | 10.0+ | Processamento de imagens (resize, conversão, filtros) |
+| Pytest | 7.0+ | Suíte de testes automatizados com fixtures |
+| Setuptools | — | Empacotamento: `find_packages`, `bdist_wheel`, `sdist` |
+| Twine | — | Upload seguro para TestPyPI e PyPI |
+| Git / GitHub | — | Versionamento e hospedagem |
+
+---
+
+## 9. Como Executar
+
+### Instalação via pip (após publicação no PyPI)
+
+```bash
+pip install pacote-process-imagem
+```
+
+### Instalação local para desenvolvimento
+
+```bash
+# Clone o repositório
+git clone https://github.com/Santosdevbjj/pacote-processamento-imagens.git
+cd pacote-processamento-imagens
+
+# Instale as dependências
+pip install -r requirements.txt
+
+# Instale o pacote em modo editável (alterações no src/ refletem imediatamente)
+pip install -e .
+```
+
+### Executar a demonstração
+
+```bash
 python -m src.pacote_process_imagem.demo
+```
 
-Gera os arquivos de saída:
+Gera três arquivos de saída: `saida_redimensionada.jpg`, `saida_cinza.jpg`, `saida_filtro.jpg`.
 
-saida_redimensionada.jpg
+### Rodar a suíte de testes
 
-saida_cinza.jpg
+```bash
+pytest tests/ -v
+```
 
-saida_filtro.jpg
+### Uso em código
 
+```python
+from pacote_process_imagem import redimensionar_imagem, converter_para_cinza, aplicar_filtro
+from pacote_process_imagem.utils import listar_imagens
 
-É ideal para testar rapidamente o funcionamento do pacote.
+# Processar imagem individual
+redimensionar_imagem("foto.jpg", 640, 480, "foto_hd.jpg")
+converter_para_cinza("foto.jpg", "foto_pb.jpg")
+aplicar_filtro("foto.jpg", "EDGE_ENHANCE", "foto_bordas.jpg")
 
+# Processar lote de imagens em um diretório
+for nome_arquivo in listar_imagens("./dataset/"):
+    converter_para_cinza(f"./dataset/{nome_arquivo}", f"./processado/{nome_arquivo}")
+```
 
----
+### Publicar no PyPI
 
-🧾 **Testes Automatizados**
-
-🧩 **tests/__init__.py**
-
-Indica que a pasta tests é um pacote Python.
-Permite que o pytest detecte automaticamente todos os arquivos de teste.
-
-
----
-
-🧪 **tests/test_core.py**
-
-Verifica as funções do módulo core.py, garantindo que:
-
-As imagens sejam corretamente convertidas para cinza;
-
-O redimensionamento funcione e gere novos arquivos.
-
-
-Usa imagens temporárias criadas com o Pillow para testes limpos e independentes.
-
+Consulte o guia completo em [`docs/guia_publicacao_pypi.md`](docs/guia_publicacao_pypi.md).
 
 ---
 
-🧪 **tests/test_filters.py**
+## 10. Aprendizados
 
-Valida o módulo filters.py, testando:
+**O maior aprendizado técnico foi entender a diferença entre "funciona localmente" e "funciona instalado".** Durante o desenvolvimento, `from pacote_process_imagem import ...` funcionava porque o `src/` estava no path do Python via IDE. Ao instalar o pacote gerado em um ambiente limpo, os imports falhavam — o `package_dir={'': 'src'}` no `setup.py` estava ausente. Esse tipo de problema só aparece quando se executa o ciclo completo de `pip install .` em um virtualenv isolado, não durante o desenvolvimento.
 
-Aplicação de filtros válidos (BLUR, CONTOUR);
+**Sobre design de API para bibliotecas:** a decisão de retornar o objeto `Image` em todas as funções (além de salvar opcionalmente) surgiu ao tentar encadear operações — redimensionar e depois converter para cinza sem regravar o arquivo intermediário. Bibliotecas bem projetadas permitem uso em memória e em disco com a mesma interface; esse princípio guia o design de qualquer função que processe e produza dados.
 
-Comportamento com filtros inválidos (uso padrão BLUR);
-
-Existência dos arquivos gerados.
-
-
-Garante a estabilidade do pipeline visual do pacote.
-
+**O que faria diferente hoje:** migraria o `setup.py` para `pyproject.toml` (PEP 517/518), adicionaria `pytest-cov` com relatório de cobertura no CI, incluiria `global-exclude *.py[cod]` no `MANIFEST.in` para evitar bytecode na distribuição-fonte e implementaria uma função `processar_lote()` em `utils.py` que aplica qualquer transformação a todos os arquivos de um diretório — reduzindo o boilerplate do exemplo de uso de lote acima.
 
 ---
 
-🧪 **tests/test_utils.py**
+## 11. Próximos Passos
 
-Confere o funcionamento do módulo utils.py, assegurando que:
-
-Apenas arquivos de imagem sejam listados;
-
-Arquivos não suportados sejam ignorados;
-
-O retorno seja correto em diretórios vazios.
-
-
-Esses testes confirmam a precisão e previsibilidade das funções auxiliares.
-
+- Migrar `setup.py` para `pyproject.toml` seguindo PEP 517/518 e `build-backend = "setuptools.build_meta"`
+- Adicionar `pytest-cov` com threshold mínimo de cobertura no pipeline de CI via GitHub Actions
+- Implementar `processar_lote(pasta, operacao, **kwargs)` em `utils.py` para aplicar qualquer transformação a um diretório inteiro
+- Adicionar suporte a `SHARPEN` e `EMBOSS` no módulo `filters.py`, expandindo o catálogo de filtros disponíveis
+- Implementar verificação de tipo e formato de arquivo na abertura de imagens, com exceção descritiva para formatos não suportados
+- Criar workflow GitHub Actions para publicação automática no PyPI a cada tag de versão (`on: push: tags: v*`)
 
 ---
 
-📘 **Documentação Técnica**
+## Autor
 
-📗 **docs/tutorial_instalacao.md**
+**Sergio Santos** — Senior Data Engineer & Cloud Architect
 
-Guia rápido para instalação e uso do pacote localmente.
-
-Passos principais:
-
-1. Clonar o repositório
-
-
-2. Instalar dependências
-
-
-3. Executar a demonstração
-
-
-
-Ideal para quem está conhecendo o projeto pela primeira vez.
-
-
----
-
-📘 **docs/guia_publicacao_pypi.md**
-
-Manual completo para empacotar e publicar o projeto no PyPI.
-Contém instruções passo a passo para:
-
-Criar as distribuições (sdist, wheel);
-
-Testar no TestPyPI;
-
-Publicar oficialmente no PyPI;
-
-Verificar instalação e versionamento.
-
-
-Inclui comandos práticos e boas práticas de manutenção e automação.
-
-
----
-
-🧭 **Resumo Geral**
-
-Categoria	Arquivo	Descrição
-
-🧩 Configuração	.gitignore, setup.py, requirements.txt, MANIFEST.in	Controle, empacotamento e dependências
-🧠 Código-fonte	__init__.py, core.py, filters.py, utils.py, demo.py	Implementação e exemplos de uso
-🧪 Testes	test_core.py, test_filters.py, test_utils.py	Garantia de qualidade e integridade
-📘 Documentação	tutorial_instalacao.md, guia_publicacao_pypi.md	Guias de uso, instalação e publicação
-
-
-
----
-
-> 🏁 **Conclusão:**
-O projeto pacoteProcessImagem foi estruturado seguindo boas práticas de engenharia de software em Python, com foco em modularidade, testabilidade, empacotamento e documentação completa.
-Essa organização facilita o aprendizado, o reuso e a publicação profissional de pacotes Python no PyPI.
-
-
-
-
----
-
-
-
-
-
-
-🪪 **Licença**
-
-Este projeto está licenciado sob a MIT License.
-
----
-**Contato:**
-
-[![Portfólio Sérgio Santos](https://img.shields.io/badge/Portfólio-Sérgio_Santos-111827?style=for-the-badge&logo=githubpages&logoColor=00eaff)](https://santosdevbjj.github.io/portfolio/)
-[![LinkedIn Sérgio Santos](https://img.shields.io/badge/LinkedIn-Sérgio_Santos-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/santossergioluiz) 
-
-
-
+[![Portfólio](https://img.shields.io/badge/Portfólio-Sérgio_Santos-111827?style=for-the-badge&logo=githubpages&logoColor=00eaff)](https://portfoliosantossergio.vercel.app)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Sérgio_Santos-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/santossergioluiz)
+[![GitHub](https://img.shields.io/badge/GitHub-Santosdevbjj-24292f?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Santosdevbjj)
